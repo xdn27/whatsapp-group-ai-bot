@@ -6,6 +6,7 @@ Bot AI untuk grup WhatsApp yang cerdas dan kontekstual, didukung oleh LLM (OpenA
 
 - **Login Mudah**: Scan QR code sekali saja, baik di terminal maupun via web.
 - **Kontekstual**: Memahami riwayat percakapan grup untuk memberikan jawaban yang relevan.
+- **Moderasi Konten Cerdas**: Menganalisis pesan secara otomatis untuk mendeteksi konten yang tidak pantas (kasar, pornografi, dll.) dan memberikan peringatan yang dinamis menggunakan AI.
 - **Fleksibel**: Mendukung berbagai model LLM dari OpenAI dan OpenRouter.
 - **Kustomisasi Persona**: Atur gaya bicara dan bahasa bot sesuai keinginan Anda melalui file `.env`.
 - **Penyimpanan Lokal**: Semua percakapan dan data sesi disimpan secara lokal di database SQLite.
@@ -50,6 +51,9 @@ Bot AI untuk grup WhatsApp yang cerdas dan kontekstual, didukung oleh LLM (OpenA
       - `ALLOWED_GROUPS`: (Opsional) Daftar NAMA grup WhatsApp yang diizinkan, dipisahkan koma (contoh: `Grup Keren Saya,Obrolan Lain`). Jika dikosongkan, bot akan merespons di semua grup.
       - `TRIGGER_KEYWORDS`: (Opsional) Daftar kata kunci yang dipisahkan koma (contoh: `bot,tanya,hai`). Jika pesan mengandung salah satu kata kunci ini, bot akan merespons meskipun tidak di-mention. Jika dikosongkan, bot hanya akan merespons jika di-mention.
       - `MENTION_TRIGGER_KEYWORDS`: (Opsional) Daftar kata kunci yang dipisahkan koma (contoh: `apa,bagaimana`). Jika bot di-mention, bot hanya akan merespons jika pesan juga mengandung salah satu kata kunci ini. Jika dikosongkan, bot akan merespons setiap kali di-mention.
+      - `CONTENT_MODERATION_ENABLED`: (Opsional) Atur ke `true` untuk mengaktifkan moderasi konten otomatis.
+      - `MODERATION_PROMPT`: (Opsional) Kustomisasi prompt yang digunakan untuk mendeteksi konten tidak pantas.
+      - `MODERATION_WARNING_PROMPT`: (Opsional) Kustomisasi prompt yang digunakan untuk menghasilkan pesan peringatan dinamis.
 
 4.  **Setup Database**
 
