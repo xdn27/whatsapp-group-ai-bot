@@ -6,17 +6,57 @@ const llmProvider = LLMFactory.createProvider();
 
 export class BotController {
   private client: Client;
-  private myNumber: string | undefined; // Nomor bot utama
-  private alternativeNumbers: Set<string> = new Set(); // Set untuk menyimpan nomor alternatif
-  private allowedGroupNames: Set<string> = new Set(); // Set untuk menyimpan nama grup yang diizinkan
-  private triggerKeywords: string[] = []; // Array untuk menyimpan kata kunci pemicu
-  private mentionTriggerKeywords: string[] = []; // Array untuk menyimpan kata kunci pemicu yang memerlukan mention
+  private myNumber: string | undefined;
+  private alternativeNumbers: Set<string> = new Set();
+  private allowedGroupNames: Set<string> = new Set();
+  private triggerKeywords: string[] = [];
+  private mentionTriggerKeywords: string[] = [];
+  private isContentModerationEnabled: boolean = false;
+  private moderationPrompt: string = '';
+  private moderationWarningPrompt: string = '';
 
   constructor(client: Client) {
     this.client = client;
-    this.loadAllowedGroups(); // Muat grup yang diizinkan saat inisialisasi
-    this.loadTriggerKeywords(); // Muat kata kunci pemicu saat inisialisasi
-    this.loadMentionTriggerKeywords(); // Muat kata kunci pemicu mention saat inisialisasi
+    this.loadAllowedGroups();
+    this.loadTriggerKeywords();
+    this.loadMentionTriggerKeywords();
+    this.loadModerationConfig();
+  }
+
+  private loadModerationConfig() {
+    this.isContentModerationEnabled = process.env.CONTENT_MODERATION_ENABLED === 'true';
+    this.moderationPrompt = process.env.MODERATION_PROMPT || '';
+    this.moderationWarningPrompt = process.env.MODERATION_WARNING_PROMPT || '';
+
+    if (this.isContentModerationEnabled) {
+      console.log('[Konfigurasi Moderasi]: Moderasi Konten Aktif.');
+      if (!this.moderationPrompt || !this.moderationWarningPrompt) {
+        console.warn('[Konfigurasi Moderasi]: MODERATION_PROMPT atau MODERATION_WARNING_PROMPT tidak diatur. Moderasi mungkin tidak berfungsi dengan benar.');
+      }
+    } else {
+      console.log('[Konfigurasi Moderasi]: Moderasi Konten Nonaktif.');
+    }
+  }
+
+  private async moderateContent(message: Message): Promise<boolean> {
+    if (!this.isContentModerationEnabled) {
+      return false;
+    }
+
+    const moderationCheckPrompt = this.moderationPrompt.replace('{MESSAGE_CONTENT}', message.body);
+    const moderationResult = await llmProvider.generateResponse(moderationCheckPrompt);
+
+    console.log(`[Hasil Moderasi AI]: ${moderationResult}`);
+
+    if (moderationResult.trim().toUpperCase() === 'YES') {
+      console.log('[Konten Tidak Pantas Terdeteksi]: Membuat pesan peringatan dinamis...');
+      const warningMessage = await llmProvider.generateResponse(this.moderationWarningPrompt);
+      await message.reply(warningMessage);
+      console.log('[Peringatan Terkirim]');
+      return true; // Konten tidak pantas
+    }
+
+    return false; // Konten aman
   }
 
   private loadAllowedGroups() {
@@ -52,11 +92,9 @@ export class BotController {
   }
 
   async initializeBotId() {
-    // Panggil ini setelah client siap
     this.myNumber = this.client.info.wid._serialized.split('@')[0];
     console.log(`[Bot ID Utama Disetel]: ${this.myNumber}`);
 
-    // Muat ID alternatif dari database yang terkait dengan myNumber ini
     const config = await prisma.botConfig.findUnique({
       where: { botNumber: this.myNumber },
     });
@@ -81,13 +119,19 @@ export class BotController {
       return;
     }
 
-    // Filter berdasarkan ALLOWED_GROUPS
     if (this.allowedGroupNames.size > 0 && !this.allowedGroupNames.has(chat.name)) {
       console.log(`[Pesan Masuk]: Grup ${chat.name} tidak diizinkan, dilewati.`);
       return;
     }
 
-    // Simpan pesan ke SQLite
+    // --- TAHAP MODERASI KONTEN ---
+    const isContentInappropriate = await this.moderateContent(message);
+    if (isContentInappropriate) {
+      console.log('[Pesan Masuk]: Pesan ditandai tidak pantas, proses dihentikan.');
+      return; // Hentikan proses jika konten tidak pantas
+    }
+    // --- AKHIR TAHAP MODERASI ---
+
     await prisma.message.create({
       data: {
         groupId: chat.id._serialized,
@@ -104,7 +148,6 @@ export class BotController {
     let shouldRespond = false;
     const messageBodyLower = message.body.toLowerCase();
 
-    // 1. Periksa apakah bot di-mention
     let botDirectlyMentioned = false;
     if (message.mentionedIds.length > 0) {
       console.log(`[Debug Mention]: My Number: ${this.myNumber}, Mentioned IDs: ${JSON.stringify(message.mentionedIds)}`);
@@ -129,7 +172,7 @@ export class BotController {
             create: { botNumber: this.myNumber, alternativeIds: JSON.stringify(Array.from(this.alternativeNumbers)) },
           });
           console.log(`[ID Alternatif Baru Ditambahkan untuk ${this.myNumber}]: ${mentionedNumber}`);
-          botDirectlyMentioned = true; // Anggap sebagai mention untuk pesan ini
+          botDirectlyMentioned = true;
           break;
         } else if (this.alternativeNumbers.has(mentionedNumber)) {
           botDirectlyMentioned = true;
@@ -140,11 +183,8 @@ export class BotController {
 
     console.log(`[Pesan Masuk]: Bot di-mention langsung? ${botDirectlyMentioned}`);
 
-    // 2. Tentukan apakah bot harus merespons
     if (botDirectlyMentioned) {
-      // Jika bot di-mention langsung
       if (this.mentionTriggerKeywords.length > 0) {
-        // Dan ada mentionTriggerKeywords, periksa apakah pesan mengandung salah satunya
         let keywordFound = false;
         for (const keyword of this.mentionTriggerKeywords) {
           if (messageBodyLower.includes(keyword)) {
@@ -159,12 +199,10 @@ export class BotController {
           console.log(`[Pesan Masuk]: Bot di-mention, tetapi tidak ada kata kunci pemicu mention yang ditemukan. Dilewati.`);
         }
       } else {
-        // Jika bot di-mention langsung dan tidak ada mentionTriggerKeywords, maka respons
         shouldRespond = true;
         console.log(`[Pesan Masuk]: Bot di-mention.`);
       }
     } else {
-      // Jika bot tidak di-mention langsung, periksa triggerKeywords (tanpa mention)
       if (this.triggerKeywords.length > 0) {
         for (const keyword of this.triggerKeywords) {
           if (messageBodyLower.includes(keyword)) {
