@@ -1,0 +1,22 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  groupId   String
+  sender    String
+  content   String
+  timestamp DateTime @default(now())
+}
+
+model BotConfig {
+  id             Int      @id @default(autoincrement())
+  botNumber      String   @unique // Nomor bot utama yang terkait dengan konfigurasi ini
+  alternativeIds String   // JSON array (stringified) dari nomor alternatif
+}
