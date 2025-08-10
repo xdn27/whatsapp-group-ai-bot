@@ -1,83 +1,85 @@
 # WhatsApp AI Bot
 
-Bot AI untuk grup WhatsApp yang cerdas dan kontekstual, didukung oleh LLM (OpenAI/OpenRouter) dan `whatsapp-web.js`.
+An intelligent and contextual AI bot for WhatsApp groups, powered by LLMs (OpenAI/OpenRouter) and `whatsapp-web.js`.
 
-## Fitur
+## Features
 
-- **Login Mudah**: Scan QR code sekali saja, baik di terminal maupun via web.
-- **Kontekstual**: Memahami riwayat percakapan grup untuk memberikan jawaban yang relevan.
-- **Moderasi Konten Cerdas**: Menganalisis pesan secara otomatis untuk mendeteksi konten yang tidak pantas (kasar, pornografi, dll.) dan memberikan peringatan yang dinamis menggunakan AI.
-- **Fleksibel**: Mendukung berbagai model LLM dari OpenAI dan OpenRouter.
-- **Kustomisasi Persona**: Atur gaya bicara dan bahasa bot sesuai keinginan Anda melalui file `.env`.
-- **Penyimpanan Lokal**: Semua percakapan dan data sesi disimpan secara lokal di database SQLite.
-- **Filter Grup**: Kontrol di grup mana saja bot akan merespons.
+* **Easy Login**: Scan the QR code once, either in the terminal or via the web.
+* **Contextual**: Understands the group chat history to provide relevant answers.
+* **Smart Content Moderation**: Automatically analyzes messages to detect inappropriate content (abusive, pornographic, etc.) and gives dynamic warnings using AI.
+* **Flexible**: Supports various LLM models from OpenAI and OpenRouter.
+* **Persona Customization**: Adjust the bot’s tone and language to your preference via the `.env` file.
+* **Local Storage**: All conversations and session data are stored locally in an SQLite database.
+* **Group Filter**: Control in which groups the bot will respond.
 
-## Stack Teknologi
+## Technology Stack
 
-- **Runtime**: Node.js
-- **Bahasa**: TypeScript
-- **Integrasi WhatsApp**: `whatsapp-web.js`
-- **Web Server**: Express
-- **Database**: SQLite
-- **ORM**: Prisma
-- **LLM**: OpenAI, OpenRouter
+* **Runtime**: Node.js
+* **Language**: TypeScript
+* **WhatsApp Integration**: `whatsapp-web.js`
+* **Web Server**: Express
+* **Database**: SQLite
+* **ORM**: Prisma
+* **LLM**: OpenAI, OpenRouter
 
-## Cara Menjalankan
+## How to Run
 
-1.  **Clone Repositori**
+1. **Clone the Repository**
 
-    ```bash
-    git clone <url-repositori-ini>
-    cd whatsapp-ai-bot
-    ```
+   ```bash
+   git clone <this-repository-url>
+   cd whatsapp-ai-bot
+   ```
 
-2.  **Install Dependensi**
+2. **Install Dependencies**
 
-    ```bash
-    npm install
-    ```
+   ```bash
+   npm install
+   ```
 
-3.  **Konfigurasi Environment**
+3. **Configure Environment**
 
-    - Salin file `.env.example` menjadi `.env`.
-      ```bash
-      cp .env.example .env
-      ```
-    - Buka file `.env` dan isi semua variabel yang diperlukan, terutama:
-      - `LLM_PROVIDER`: Pilih `openai` atau `openrouter`.
-      - `OPENAI_API_KEY`: Kunci API OpenAI Anda.
-      - `OPENROUTER_API_KEY`: Kunci API OpenRouter Anda (jika digunakan).
-      - `OPENROUTER_REFERER`: URL aplikasi atau website Anda (wajib untuk OpenRouter).
-      - `ALLOWED_GROUPS`: (Opsional) Daftar NAMA grup WhatsApp yang diizinkan, dipisahkan koma (contoh: `Grup Keren Saya,Obrolan Lain`). Jika dikosongkan, bot akan merespons di semua grup.
-      - `TRIGGER_KEYWORDS`: (Opsional) Daftar kata kunci yang dipisahkan koma (contoh: `bot,tanya,hai`). Jika pesan mengandung salah satu kata kunci ini, bot akan merespons meskipun tidak di-mention. Jika dikosongkan, bot hanya akan merespons jika di-mention.
-      - `MENTION_TRIGGER_KEYWORDS`: (Opsional) Daftar kata kunci yang dipisahkan koma (contoh: `apa,bagaimana`). Jika bot di-mention, bot hanya akan merespons jika pesan juga mengandung salah satu kata kunci ini. Jika dikosongkan, bot akan merespons setiap kali di-mention.
-      - `CONTENT_MODERATION_ENABLED`: (Opsional) Atur ke `true` untuk mengaktifkan moderasi konten otomatis.
-      - `MODERATION_PROMPT`: (Opsional) Kustomisasi prompt yang digunakan untuk mendeteksi konten tidak pantas.
-      - `MODERATION_WARNING_PROMPT`: (Opsional) Kustomisasi prompt yang digunakan untuk menghasilkan pesan peringatan dinamis.
+   * Copy `.env.example` to `.env`.
 
-4.  **Setup Database**
+     ```bash
+     cp .env.example .env
+     ```
+   * Open `.env` and fill in all required variables, especially:
 
-    Jalankan migrasi Prisma untuk membuat file database SQLite dan tabel yang diperlukan.
+     * `LLM_PROVIDER`: Choose `openai` or `openrouter`.
+     * `OPENAI_API_KEY`: Your OpenAI API key.
+     * `OPENROUTER_API_KEY`: Your OpenRouter API key (if used).
+     * `OPENROUTER_REFERER`: Your application or website URL (required for OpenRouter).
+     * `ALLOWED_GROUPS`: (Optional) List of ALLOWED WhatsApp group NAMES, separated by commas (example: `My Cool Group,Another Chat`). If left empty, the bot will respond in all groups.
+     * `TRIGGER_KEYWORDS`: (Optional) List of keywords separated by commas (example: `bot,ask,hi`). If a message contains any of these keywords, the bot will respond even without being mentioned. If empty, the bot only responds when mentioned.
+     * `MENTION_TRIGGER_KEYWORDS`: (Optional) List of keywords separated by commas (example: `what,how`). If the bot is mentioned, it will only respond if the message also contains one of these keywords. If empty, the bot responds every time it’s mentioned.
+     * `CONTENT_MODERATION_ENABLED`: (Optional) Set to `true` to enable automatic content moderation.
+     * `MODERATION_PROMPT`: (Optional) Customize the prompt used to detect inappropriate content.
+     * `MODERATION_WARNING_PROMPT`: (Optional) Customize the prompt used to generate dynamic warning messages.
 
-    ```bash
-    npm run prisma:migrate
-    ```
+4. **Setup Database**
 
-5.  **Jalankan Bot**
+   Run Prisma migrations to create the SQLite database file and the required tables.
 
-    ```bash
-    npm run dev
-    ```
+   ```bash
+   npm run prisma:migrate
+   ```
 
-6.  **Login WhatsApp**
+5. **Run the Bot**
 
-    - **Opsi 1 (Terminal)**: QR code akan muncul langsung di terminal Anda. Scan menggunakan aplikasi WhatsApp di ponsel Anda.
-    - **Opsi 2 (Web)**: Buka browser dan akses `http://localhost:3000/qr`. Scan QR code yang ditampilkan.
+   ```bash
+   npm run dev
+   ```
 
-    Setelah berhasil login, sesi akan disimpan secara lokal. Anda tidak perlu scan ulang setiap kali menjalankan bot.
+6. **Login to WhatsApp**
 
-## Cara Menggunakan
+   * **Option 1 (Terminal)**: The QR code will appear directly in your terminal. Scan it using WhatsApp on your phone.
+   * **Option 2 (Web)**: Open your browser and go to `http://localhost:3000/qr`. Scan the displayed QR code.
 
-1.  Undang bot ke grup WhatsApp Anda.
-2.  Untuk bertanya, mention bot di dalam pesan Anda (contoh: `@NamaBot apa kabar?`).
-3.  Bot akan membaca riwayat pesan di grup untuk mencari konteks, lalu memberikan jawaban yang relevan.
+   After logging in successfully, the session will be stored locally. You don’t need to scan again every time you run the bot.
+
+## How to Use
+
+1. Invite the bot to your WhatsApp group.
+2. To ask a question, mention the bot in your message (example: `@BotName how are you?`).
+3. The bot will read the group’s message history for context, then give a relevant answer.
